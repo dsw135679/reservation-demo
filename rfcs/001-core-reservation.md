@@ -22,19 +22,22 @@ Rust 练习项目。
 我们使用 gRPC 实现服务接口。下面为 proto 文件的定义：
 
 ```proto
+syntax="proto3";
+package reservation;
+
 // 预约状态
 enum ReservationStatus{
-  UNKNOWN=0; // 未知状态
-  PENDING=1; // 待确认状态
-  CONFIRMED=2;// 已确认状态
-  BLOCKED=3;// 锁定状态
+  RESERVATION_STATUS_UNKNOWN=0; // 未知状态
+  RESERVATION_STATUS_PENDING=1; // 待确认状态
+  RESERVATION_STATUS_CONFIRMED=2;// 已确认状态
+  RESERVATION_STATUS_BLOCKED=3;// 锁定状态
 }
 
 enum ReservationUpdateType{
-  UNKNOWN=0;
-  CREATE=1;
-  UPDATE=2;
-  DELETE=3;
+  RESERVATION_UPDATE_TYPE_UNKNOWN=0;
+  RESERVATION_UPDATE_TYPE_CREATE=1;
+  RESERVATION_UPDATE_TYPE_UPDATE=2;
+  RESERVATION_UPDATE_TYPE_DELETE=3;
 }
 
 // 预约资源信息
@@ -103,7 +106,7 @@ message QueryRequest{
 
 message ListenRequest{}
 message ListenResponse{
-  int8 op=1;
+  ReservationUpdateType op=1;
   Reservation reservation=2;
 }
 
