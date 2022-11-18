@@ -73,13 +73,19 @@ message GetResponse{
   Reservation reservation=1;
 }
 
-message QueryRequest{
+// query reservation with user_id, resource_id, start time, end time and status
+message ReservationRequest{
   string resource_id=1;
   string user_id=2;
   // use status to filter result. If UNKNOWN,return all reservations
   ReservationStatus status=3;
   google.protobuf.Timestamp start=4;
   google.protobuf.Timestamp end=5;
+}
+
+// To query reservations,send a QueryRequest
+message QueryRequest{
+  ReservationRequest query=1;
 }
 
 message ListenRequest{}

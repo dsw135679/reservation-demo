@@ -151,13 +151,13 @@ CREATE INDEX reservations_user_id_idx ON rsvp.reservations (user_id);
 -- if resource_id is null, find all reservations during for the user
 -- if both are null, find all reservations within during
 -- if both set,find all reservations within during for the resource and user
-CREATE OR REPLACE FUNCTION rsvp.query(uid text,rid text,during: TSTZRANGE) RETURNS TABLE rsvp.reservations AS $$ $$ LANGUAGE plpgsql;
+CREATE OR REPLACE FUNCTION rsvp.query(uid text,rid text,during TSTZRANGE) RETURNS TABLE rsvp.reservations AS $$ $$ LANGUAGE plpgsql;
 
 -- reservation change queue
 CREATE TABLE rsvp.reservation_changes(
   id SERIAL NOT NULL,
   reservation_id uuid NOT NULL,
-  op rsvp.reservation_update_type NOT NULL,
+  op rsvp.reservation_update_type NOT NULL
 );
 
 -- trigger for add/update/delete a reservation

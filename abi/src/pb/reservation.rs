@@ -68,8 +68,9 @@ pub struct GetResponse {
     #[prost(message, optional, tag = "1")]
     pub reservation: ::core::option::Option<Reservation>,
 }
+/// query reservation with user_id, resource_id, start time, end time and status
 #[derive(Clone, PartialEq, ::prost::Message)]
-pub struct QueryRequest {
+pub struct ReservationRequest {
     #[prost(string, tag = "1")]
     pub resource_id: ::prost::alloc::string::String,
     #[prost(string, tag = "2")]
@@ -81,6 +82,12 @@ pub struct QueryRequest {
     pub start: ::core::option::Option<::prost_types::Timestamp>,
     #[prost(message, optional, tag = "5")]
     pub end: ::core::option::Option<::prost_types::Timestamp>,
+}
+/// To query reservations,send a QueryRequest
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct QueryRequest {
+    #[prost(message, optional, tag = "1")]
+    pub query: ::core::option::Option<ReservationRequest>,
 }
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ListenRequest {}
