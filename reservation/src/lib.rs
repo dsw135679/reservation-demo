@@ -1,26 +1,39 @@
 mod error;
+mod manager;
 
+use async_trait::async_trait;
 pub use error::ReservationError;
+use sqlx::PgPool;
 
 pub type ReservationId = String;
 pub type UserId = String;
 pub type ResourceId = String;
 
+#[derive(Debug)]
+pub struct ReservationManager {
+    pool: PgPool,
+}
+
+/// reservation trait
+#[async_trait]
 pub trait Rsvp {
     /// make a reservation
-    fn reserve(&self, rsvp: abi::Reservation) -> Result<abi::Reservation, ReservationError>;
+    async fn reserve(&self, rsvp: abi::Reservation) -> Result<abi::Reservation, ReservationError>;
     /// change reservation status (if current status is pending, change it to confirmed)
-    fn change_status(&self, id: ReservationId) -> Result<abi::Reservation, ReservationError>;
+    async fn change_status(&self, id: ReservationId) -> Result<abi::Reservation, ReservationError>;
     /// update note
-    fn update_note(
+    async fn update_note(
         &self,
         id: ReservationId,
         note: String,
     ) -> Result<abi::Reservation, ReservationError>;
     /// delete reservation
-    fn delete(&self, id: ReservationId) -> Result<(), ReservationError>;
+    async fn delete(&self, id: ReservationId) -> Result<(), ReservationError>;
     /// get reservation by id
-    fn get(&self, id: ReservationId) -> Result<abi::Reservation, ReservationError>;
+    async fn get(&self, id: ReservationId) -> Result<abi::Reservation, ReservationError>;
     /// query reservations
-    fn query(&self, query: abi::QueryRequest) -> Result<Vec<abi::Reservation>, ReservationError>;
+    async fn query(
+        &self,
+        query: abi::ReservationRequest,
+    ) -> Result<Vec<abi::Reservation>, ReservationError>;
 }

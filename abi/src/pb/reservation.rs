@@ -99,7 +99,9 @@ pub struct ListenResponse {
     pub reservation: ::core::option::Option<Reservation>,
 }
 /// 预约状态
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+#[derive(
+    sqlx::Type, Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration,
+)]
 #[repr(i32)]
 pub enum ReservationStatus {
     /// 未知状态
