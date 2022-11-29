@@ -1,6 +1,18 @@
 use std::fmt;
 
-use crate::ReservationStatus;
+use crate::{ReservationStatus, RsvpStatus};
+
+/// 转换数据库"reservation_status" 枚举值 到pb 定义的 "reservation_status"
+impl From<RsvpStatus> for ReservationStatus {
+    fn from(status: RsvpStatus) -> Self {
+        match status {
+            RsvpStatus::Unknown => ReservationStatus::Unknown,
+            RsvpStatus::Pending => ReservationStatus::Pending,
+            RsvpStatus::Confirmed => ReservationStatus::Confirmed,
+            RsvpStatus::Blocked => ReservationStatus::Blocked,
+        }
+    }
+}
 
 impl fmt::Display for ReservationStatus {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
