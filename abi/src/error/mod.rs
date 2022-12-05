@@ -19,7 +19,7 @@ pub enum Error {
     #[error("Invalid resource id: {0}")]
     InvalidResourceId(String),
     #[error("Invalid reservation id: {0}")]
-    InvalidReservationId(String),
+    InvalidReservationId(i64),
     #[error("invalid header (expected {expected:?}, found {found:?})")]
     InvalidHeader { expected: String, found: String },
     #[error("unknown data store error")]

@@ -3,7 +3,6 @@ use std::ops::Bound;
 use chrono::{DateTime, FixedOffset, Utc};
 use sqlx::{
     postgres::{types::PgRange, PgRow},
-    types::Uuid,
     FromRow, Row,
 };
 
@@ -21,7 +20,7 @@ impl Reservation {
         note: impl Into<String>,
     ) -> Self {
         Self {
-            id: "".to_string(),
+            id: 0,
             user_id: uid.into(),
             status: ReservationStatus::Pending as i32,
             resource_id: rid.into(),
@@ -54,7 +53,6 @@ impl Validate for Reservation {
 
 impl FromRow<'_, PgRow> for Reservation {
     fn from_row(row: &PgRow) -> Result<Self, sqlx::Error> {
-        let uuid: Uuid = row.get("id");
         let range: PgRange<DateTime<Utc>> = row.get("timespan");
         let range: NaiveRange<DateTime<Utc>> = range.into();
         assert!(range.start.is_some());
@@ -63,7 +61,7 @@ impl FromRow<'_, PgRow> for Reservation {
         let end = range.end.unwrap();
         let status: RsvpStatus = row.get("status");
         Ok(Self {
-            id: uuid.to_string(),
+            id: row.get("id"),
             user_id: row.get("user_id"),
             resource_id: row.get("resource_id"),
             start: Some(convert_to_timestamp(start)),

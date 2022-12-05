@@ -20,7 +20,7 @@ enum ReservationUpdateType{
 
 // 预约资源信息
 message Reservation{
-  string id=1;
+  int64 id=1;
   string user_id=2;
   ReservationStatus status=3;
 
