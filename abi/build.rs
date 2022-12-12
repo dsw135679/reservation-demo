@@ -1,5 +1,6 @@
 use std::process::Command;
 
+use proto_builder_trait::tonic::BuilderAttributes;
 use tonic_build::Builder;
 
 trait BuilderExt {
@@ -39,7 +40,7 @@ impl BuilderExt for Builder {
         fields.iter().fold(self, |acc, field| {
             acc.field_attribute(
                 &format!("{}.{}", path, field),
-                "#[builder(setter(into,strip_option))]",
+                "#[builder(setter(into,strip_option),default)]",
             )
         })
     }
@@ -49,12 +50,31 @@ fn main() {
     tonic_build::configure()
         .out_dir("src/pb")
         .with_sql_type(&["reservation.ReservationStatus"])
-        .with_builder(&["reservation.ReservationQuery"])
+        .with_builder(&[
+            "reservation.ReservationQuery",
+            "reservation.ReservationFilter",
+        ])
         .with_builder_into(
             "reservation.ReservationQuery",
-            &["resource_id", "user_id", "status", "page", "size", "desc"],
+            &["resource_id", "user_id", "status", "page", "desc"],
+        )
+        .with_builder_into(
+            "reservation.ReservationFilter",
+            &["resource_id", "user_id", "status", "desc"],
         )
         .with_builder_option("reservation.ReservationQuery", &["start", "end"])
+        .with_builder_option("reservation.ReservationFilter", &["cursor"])
+        .with_type_attributes(
+            &[
+                "reservation.ReservationQuery",
+                "reservation.ReservationFilter",
+            ],
+            &[r#"#[builder(build_fn(name = "private_build"))]"#],
+        )
+        .with_field_attributes(
+            &["page_size"],
+            &["#[builder(setter(into), default = \"10\")]"],
+        )
         .compile(&["protos/reservation.proto"], &["protos"])
         .unwrap();
 

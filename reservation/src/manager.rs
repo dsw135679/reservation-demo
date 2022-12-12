@@ -1,4 +1,4 @@
-use abi::Validate;
+use abi::{Normalizer, ToSql, Validator};
 use async_trait::async_trait;
 use chrono::{DateTime, Utc};
 use sqlx::{postgres::types::PgRange, PgPool, Row};
@@ -50,7 +50,7 @@ impl Rsvp for ReservationManager {
         // update the note of the reservation
         id.validate()?;
         let rsvp =
-            sqlx::query_as("UPDATE rsvp.reservations SET note = $1 WHERE id =$2 RETURNING *")
+            sqlx::query_as("UPDATE rsvp.reservations SET note = $1 WHERE id = $2 RETURNING *")
                 .bind(note)
                 .bind(id)
                 .fetch_one(&self.pool)
@@ -83,24 +83,23 @@ impl Rsvp for ReservationManager {
         &self,
         query: abi::ReservationQuery,
     ) -> Result<Vec<abi::Reservation>, abi::Error> {
-        let user_id = str_to_option(&query.user_id);
-        let resource_id = str_to_option(&query.resource_id);
-        let timespan = query.get_timespan();
-        let status = abi::ReservationStatus::from_i32(query.status)
-            .unwrap_or(abi::ReservationStatus::Pending);
-        let sql = "SELECT * FROM rsvp.query($1,$2,$3,$4::rsvp.reservation_status,$5,$6,$7)";
-        let rsvps = sqlx::query_as(sql)
-            .bind(user_id)
-            .bind(resource_id)
-            .bind(timespan)
-            .bind(status.to_string())
-            .bind(query.page)
-            .bind(query.desc)
-            .bind(query.size)
-            .fetch_all(&self.pool)
-            .await?;
-
+        let sql = query.to_sql();
+        let rsvps = sqlx::query_as(&sql).fetch_all(&self.pool).await?;
         Ok(rsvps)
+    }
+
+    async fn filter(
+        &self,
+        mut filter: abi::ReservationFilter,
+    ) -> Result<(abi::FilterPager, Vec<abi::Reservation>), abi::Error> {
+        // filter reservations by user_id,resource_id,status,and order by id
+        filter.normalize()?;
+        let sql = filter.to_sql();
+
+        let rsvps: Vec<abi::Reservation> = sqlx::query_as(&sql).fetch_all(&self.pool).await?;
+        let mut rsvps = rsvps.into_iter().collect();
+        let pager = filter.get_pager(&mut rsvps);
+        Ok((pager, rsvps.into_iter().collect()))
     }
 }
 
@@ -110,19 +109,11 @@ impl ReservationManager {
     }
 }
 
-fn str_to_option(s: &str) -> Option<&str> {
-    if s.is_empty() {
-        None
-    } else {
-        Some(s)
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use abi::{
-        Reservation, ReservationConflict, ReservationConflictInfo, ReservationQueryBuilder,
-        ReservationWindow,
+        Reservation, ReservationConflict, ReservationConflictInfo, ReservationFilterBuilder,
+        ReservationQueryBuilder, ReservationWindow,
     };
     use prost_types::Timestamp;
 
@@ -282,6 +273,22 @@ mod tests {
         let rsvps = manager.query(query).await.unwrap();
         assert_eq!(rsvps.len(), 1);
         assert_eq!(rsvps[0], rsvp)
+    }
+
+    #[sqlx_database_tester::test(pool(variable = "migrate_pool", migrations = "../migrations"))]
+    async fn filter_reservations_should_work() {
+        let (rsvp, manager) = make_chalanzi_reservation(migrate_pool.clone()).await;
+        let filter = ReservationFilterBuilder::default()
+            .user_id("chalanziId")
+            .status(abi::ReservationStatus::Pending as i32)
+            .build()
+            .unwrap();
+
+        let (pager, rsvps) = manager.filter(filter).await.unwrap();
+        assert_eq!(pager.prev, None);
+        assert_eq!(pager.next, None);
+        assert_eq!(rsvps.len(), 1);
+        assert_eq!(rsvps[0], rsvp);
     }
 
     async fn make_chalanzi_reservation(pool: PgPool) -> (Reservation, ReservationManager) {

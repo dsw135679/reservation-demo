@@ -7,8 +7,8 @@ use sqlx::{
 };
 
 use crate::{
-    convert_to_timestamp, get_timestamp, validate_range, Error, Reservation, ReservationStatus,
-    RsvpStatus, Validate,
+    convert_to_timestamp, get_timestamp, pager::Id, validate_range, Error, Reservation,
+    ReservationStatus, RsvpStatus, Validator,
 };
 
 impl Reservation {
@@ -24,8 +24,8 @@ impl Reservation {
             user_id: uid.into(),
             status: ReservationStatus::Pending as i32,
             resource_id: rid.into(),
-            start: Some(convert_to_timestamp(start.with_timezone(&Utc))),
-            end: Some(convert_to_timestamp(end.with_timezone(&Utc))),
+            start: Some(convert_to_timestamp(&start.with_timezone(&Utc))),
+            end: Some(convert_to_timestamp(&end.with_timezone(&Utc))),
             note: note.into(),
         }
     }
@@ -35,7 +35,13 @@ impl Reservation {
     }
 }
 
-impl Validate for Reservation {
+impl Id for Reservation {
+    fn id(&self) -> i64 {
+        self.id
+    }
+}
+
+impl Validator for Reservation {
     fn validate(&self) -> Result<(), Error> {
         if self.user_id.is_empty() {
             return Err(Error::InvalidUserId(self.user_id.clone()));
@@ -64,8 +70,8 @@ impl FromRow<'_, PgRow> for Reservation {
             id: row.get("id"),
             user_id: row.get("user_id"),
             resource_id: row.get("resource_id"),
-            start: Some(convert_to_timestamp(start)),
-            end: Some(convert_to_timestamp(end)),
+            start: Some(convert_to_timestamp(&start)),
+            end: Some(convert_to_timestamp(&end)),
             note: row.get("note"),
             status: ReservationStatus::from(status) as i32,
         })

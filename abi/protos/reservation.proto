@@ -42,7 +42,8 @@ message ReserveResponse{
 }
 
 message UpdateRequest{
-  string node=1;
+  int64 id=1;
+  string node=2;
 }
 
 message UpdateResponse{
@@ -50,7 +51,7 @@ message UpdateResponse{
 }
 
 message ConfirmRequest{
-  string id=1;
+  int64 id=1;
 }
 
 message ConfirmResponse{
@@ -58,7 +59,7 @@ message ConfirmResponse{
 }
 
 message CancelRequest{
-  string id=1;
+  int64 id=1;
 }
 
 message CancelResponse{
@@ -66,7 +67,7 @@ message CancelResponse{
 }
 
 message GetRequest{
-  string id=1;
+  int64 id=1;
 }
 
 message GetResponse{
@@ -86,9 +87,9 @@ message ReservationQuery{
   // end time for the reservation query. If 0, use Infinity for end time
   google.protobuf.Timestamp end=5;
   // current page for the query
-  int32 page=6;
+  int64 page=6;
   // page size for the query
-  int32 size=7;
+  int64 page_size=7;
   // sort direction
   bool desc=8;
 }
@@ -96,6 +97,42 @@ message ReservationQuery{
 // To query reservations,send a QueryRequest
 message QueryRequest{
   ReservationQuery query=1;
+}
+
+// To query reservations,order by reservation id
+message ReservationFilter{
+   // resource id for the reservation query. If empty, query all resources
+   string resource_id=1;
+   // user id for the reservation query. If empty, query all users
+   string user_id=2;
+   // use status to filter result. If UNKNOWN,return all reservations
+   ReservationStatus status=3;
+   // current cursor
+   optional int64 cursor=4;
+   // page size for the query
+  int64 page_size=5;
+  // sort direction
+  bool desc=6;
+}
+
+// 分页数据
+message FilterPager{
+  // 前一页数据
+ optional int64 prev=1;
+  // 后一页数据
+  optional int64 next=2;
+  // 总数
+  optional int64 total=3;
+}
+
+// To query reservation,send a QueryOrderById
+message FilterRequest{
+  ReservationFilter filter=1;
+}
+
+message FilterResponse{
+  repeated Reservation reservations=1;
+  FilterPager pager=2;
 }
 
 message ListenRequest{}
@@ -111,7 +148,10 @@ service ReservationService{
   rpc update(UpdateRequest) returns (UpdateResponse);
   rpc cancel(CancelRequest) returns (CancelResponse);
   rpc get(GetRequest) returns (GetResponse);
+  // query reservations by resource id, user id, status, start time,end time.
   rpc query(QueryRequest) returns (stream Reservation);
+  // query reservations,order by reservation id
+  rpc filter(FilterRequest) returns (FilterResponse);
   // another system could monitor newly added/confirmed/cancelled reservations
   rpc listen(ListenRequest) returns (stream ListenResponse);
 }

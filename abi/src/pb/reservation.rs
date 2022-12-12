@@ -30,7 +30,9 @@ pub struct ReserveResponse {
 }
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct UpdateRequest {
-    #[prost(string, tag = "1")]
+    #[prost(int64, tag = "1")]
+    pub id: i64,
+    #[prost(string, tag = "2")]
     pub node: ::prost::alloc::string::String,
 }
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -40,8 +42,8 @@ pub struct UpdateResponse {
 }
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ConfirmRequest {
-    #[prost(string, tag = "1")]
-    pub id: ::prost::alloc::string::String,
+    #[prost(int64, tag = "1")]
+    pub id: i64,
 }
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ConfirmResponse {
@@ -50,8 +52,8 @@ pub struct ConfirmResponse {
 }
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct CancelRequest {
-    #[prost(string, tag = "1")]
-    pub id: ::prost::alloc::string::String,
+    #[prost(int64, tag = "1")]
+    pub id: i64,
 }
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct CancelResponse {
@@ -60,8 +62,8 @@ pub struct CancelResponse {
 }
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct GetRequest {
-    #[prost(string, tag = "1")]
-    pub id: ::prost::alloc::string::String,
+    #[prost(int64, tag = "1")]
+    pub id: i64,
 }
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct GetResponse {
@@ -69,7 +71,9 @@ pub struct GetResponse {
     pub reservation: ::core::option::Option<Reservation>,
 }
 /// query reservation with user_id, resource_id, start time, end time and status
-#[derive(derive_builder::Builder, Clone, PartialEq, ::prost::Message)]
+#[derive(derive_builder::Builder)]
+#[builder(build_fn(name = "private_build"))]
+#[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ReservationQuery {
     /// resource id for the reservation query. If empty, query all resources
     #[prost(string, tag = "1")]
@@ -85,20 +89,20 @@ pub struct ReservationQuery {
     pub status: i32,
     /// start time for the reservation query. If 0, use Infinity for start time
     #[prost(message, optional, tag = "4")]
-    #[builder(setter(into, strip_option))]
+    #[builder(setter(into, strip_option), default)]
     pub start: ::core::option::Option<::prost_types::Timestamp>,
     /// end time for the reservation query. If 0, use Infinity for end time
     #[prost(message, optional, tag = "5")]
-    #[builder(setter(into, strip_option))]
+    #[builder(setter(into, strip_option), default)]
     pub end: ::core::option::Option<::prost_types::Timestamp>,
     /// current page for the query
-    #[prost(int32, tag = "6")]
+    #[prost(int64, tag = "6")]
     #[builder(setter(into), default)]
-    pub page: i32,
+    pub page: i64,
     /// page size for the query
-    #[prost(int32, tag = "7")]
-    #[builder(setter(into), default)]
-    pub size: i32,
+    #[prost(int64, tag = "7")]
+    #[builder(setter(into), default = "10")]
+    pub page_size: i64,
     /// sort direction
     #[prost(bool, tag = "8")]
     #[builder(setter(into), default)]
@@ -109,6 +113,62 @@ pub struct ReservationQuery {
 pub struct QueryRequest {
     #[prost(message, optional, tag = "1")]
     pub query: ::core::option::Option<ReservationQuery>,
+}
+/// To query reservations,order by reservation id
+#[derive(derive_builder::Builder)]
+#[builder(build_fn(name = "private_build"))]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ReservationFilter {
+    /// resource id for the reservation query. If empty, query all resources
+    #[prost(string, tag = "1")]
+    #[builder(setter(into), default)]
+    pub resource_id: ::prost::alloc::string::String,
+    /// user id for the reservation query. If empty, query all users
+    #[prost(string, tag = "2")]
+    #[builder(setter(into), default)]
+    pub user_id: ::prost::alloc::string::String,
+    /// use status to filter result. If UNKNOWN,return all reservations
+    #[prost(enumeration = "ReservationStatus", tag = "3")]
+    #[builder(setter(into), default)]
+    pub status: i32,
+    /// current cursor
+    #[prost(int64, optional, tag = "4")]
+    #[builder(setter(into, strip_option), default)]
+    pub cursor: ::core::option::Option<i64>,
+    /// page size for the query
+    #[prost(int64, tag = "5")]
+    #[builder(setter(into), default = "10")]
+    pub page_size: i64,
+    /// sort direction
+    #[prost(bool, tag = "6")]
+    #[builder(setter(into), default)]
+    pub desc: bool,
+}
+/// 分页数据
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct FilterPager {
+    /// 前一页数据
+    #[prost(int64, optional, tag = "1")]
+    pub prev: ::core::option::Option<i64>,
+    /// 后一页数据
+    #[prost(int64, optional, tag = "2")]
+    pub next: ::core::option::Option<i64>,
+    /// 总数
+    #[prost(int64, optional, tag = "3")]
+    pub total: ::core::option::Option<i64>,
+}
+/// To query reservation,send a QueryOrderById
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct FilterRequest {
+    #[prost(message, optional, tag = "1")]
+    pub filter: ::core::option::Option<ReservationFilter>,
+}
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct FilterResponse {
+    #[prost(message, repeated, tag = "1")]
+    pub reservations: ::prost::alloc::vec::Vec<Reservation>,
+    #[prost(message, optional, tag = "2")]
+    pub pager: ::core::option::Option<FilterPager>,
 }
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ListenRequest {}
@@ -312,6 +372,7 @@ pub mod reservation_service_client {
             let path = http::uri::PathAndQuery::from_static("/reservation.ReservationService/get");
             self.inner.unary(request.into_request(), path, codec).await
         }
+        /// query reservations by resource id, user id, status, start time,end time.
         pub async fn query(
             &mut self,
             request: impl tonic::IntoRequest<super::QueryRequest>,
@@ -329,6 +390,22 @@ pub mod reservation_service_client {
             self.inner
                 .server_streaming(request.into_request(), path, codec)
                 .await
+        }
+        /// query reservations,order by reservation id
+        pub async fn filter(
+            &mut self,
+            request: impl tonic::IntoRequest<super::FilterRequest>,
+        ) -> Result<tonic::Response<super::FilterResponse>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path =
+                http::uri::PathAndQuery::from_static("/reservation.ReservationService/filter");
+            self.inner.unary(request.into_request(), path, codec).await
         }
         /// another system could monitor newly added/confirmed/cancelled reservations
         pub async fn listen(
@@ -382,10 +459,16 @@ pub mod reservation_service_server {
         type queryStream: futures_core::Stream<Item = Result<super::Reservation, tonic::Status>>
             + Send
             + 'static;
+        /// query reservations by resource id, user id, status, start time,end time.
         async fn query(
             &self,
             request: tonic::Request<super::QueryRequest>,
         ) -> Result<tonic::Response<Self::queryStream>, tonic::Status>;
+        /// query reservations,order by reservation id
+        async fn filter(
+            &self,
+            request: tonic::Request<super::FilterRequest>,
+        ) -> Result<tonic::Response<super::FilterResponse>, tonic::Status>;
         ///Server streaming response type for the listen method.
         type listenStream: futures_core::Stream<Item = Result<super::ListenResponse, tonic::Status>>
             + Send
@@ -635,6 +718,37 @@ pub mod reservation_service_server {
                             send_compression_encodings,
                         );
                         let res = grpc.server_streaming(method, req).await;
+                        Ok(res)
+                    };
+                    Box::pin(fut)
+                }
+                "/reservation.ReservationService/filter" => {
+                    #[allow(non_camel_case_types)]
+                    struct filterSvc<T: ReservationService>(pub Arc<T>);
+                    impl<T: ReservationService> tonic::server::UnaryService<super::FilterRequest> for filterSvc<T> {
+                        type Response = super::FilterResponse;
+                        type Future = BoxFuture<tonic::Response<Self::Response>, tonic::Status>;
+                        fn call(
+                            &mut self,
+                            request: tonic::Request<super::FilterRequest>,
+                        ) -> Self::Future {
+                            let inner = self.0.clone();
+                            let fut = async move { (*inner).filter(request).await };
+                            Box::pin(fut)
+                        }
+                    }
+                    let accept_compression_encodings = self.accept_compression_encodings;
+                    let send_compression_encodings = self.send_compression_encodings;
+                    let inner = self.inner.clone();
+                    let fut = async move {
+                        let inner = inner.0;
+                        let method = filterSvc(inner);
+                        let codec = tonic::codec::ProstCodec::default();
+                        let mut grpc = tonic::server::Grpc::new(codec).apply_compression_config(
+                            accept_compression_encodings,
+                            send_compression_encodings,
+                        );
+                        let res = grpc.unary(method, req).await;
                         Ok(res)
                     };
                     Box::pin(fut)

@@ -22,6 +22,12 @@ pub enum Error {
     InvalidReservationId(i64),
     #[error("invalid header (expected {expected:?}, found {found:?})")]
     InvalidHeader { expected: String, found: String },
+    #[error("Invalid page size: {0}")]
+    InvalidPageSize(i64),
+    #[error("Invalid cursor: {0}")]
+    InvalidCursor(i64),
+    #[error("Invalid reservation status: {0}")]
+    InvalidStatus(i32),
     #[error("unknown data store error")]
     Unknown,
 }
