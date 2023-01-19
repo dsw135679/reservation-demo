@@ -19,12 +19,12 @@ pub struct Reservation {
     pub note: ::prost::alloc::string::String,
 }
 #[derive(Clone, PartialEq, ::prost::Message)]
-pub struct ReserveRequest {
+pub struct ReservationRequest {
     #[prost(message, optional, tag = "1")]
     pub reservation: ::core::option::Option<Reservation>,
 }
 #[derive(Clone, PartialEq, ::prost::Message)]
-pub struct ReserveResponse {
+pub struct ReservationResponse {
     #[prost(message, optional, tag = "1")]
     pub reservation: ::core::option::Option<Reservation>,
 }
@@ -300,8 +300,8 @@ pub mod reservation_service_client {
         }
         pub async fn reserve(
             &mut self,
-            request: impl tonic::IntoRequest<super::ReserveRequest>,
-        ) -> Result<tonic::Response<super::ReserveResponse>, tonic::Status> {
+            request: impl tonic::IntoRequest<super::ReservationRequest>,
+        ) -> Result<tonic::Response<super::ReservationResponse>, tonic::Status> {
             self.inner.ready().await.map_err(|e| {
                 tonic::Status::new(
                     tonic::Code::Unknown,
@@ -411,7 +411,7 @@ pub mod reservation_service_client {
         pub async fn listen(
             &mut self,
             request: impl tonic::IntoRequest<super::ListenRequest>,
-        ) -> Result<tonic::Response<tonic::codec::Streaming<super::ListenResponse>>, tonic::Status>
+        ) -> Result<tonic::Response<tonic::codec::Streaming<super::Reservation>>, tonic::Status>
         {
             self.inner.ready().await.map_err(|e| {
                 tonic::Status::new(
@@ -437,8 +437,8 @@ pub mod reservation_service_server {
     pub trait ReservationService: Send + Sync + 'static {
         async fn reserve(
             &self,
-            request: tonic::Request<super::ReserveRequest>,
-        ) -> Result<tonic::Response<super::ReserveResponse>, tonic::Status>;
+            request: tonic::Request<super::ReservationRequest>,
+        ) -> Result<tonic::Response<super::ReservationResponse>, tonic::Status>;
         async fn confirm(
             &self,
             request: tonic::Request<super::ConfirmRequest>,
@@ -470,7 +470,7 @@ pub mod reservation_service_server {
             request: tonic::Request<super::FilterRequest>,
         ) -> Result<tonic::Response<super::FilterResponse>, tonic::Status>;
         ///Server streaming response type for the listen method.
-        type listenStream: futures_core::Stream<Item = Result<super::ListenResponse, tonic::Status>>
+        type listenStream: futures_core::Stream<Item = Result<super::Reservation, tonic::Status>>
             + Send
             + 'static;
         /// another system could monitor newly added/confirmed/cancelled reservations
@@ -535,12 +535,14 @@ pub mod reservation_service_server {
                 "/reservation.ReservationService/reserve" => {
                     #[allow(non_camel_case_types)]
                     struct reserveSvc<T: ReservationService>(pub Arc<T>);
-                    impl<T: ReservationService> tonic::server::UnaryService<super::ReserveRequest> for reserveSvc<T> {
-                        type Response = super::ReserveResponse;
+                    impl<T: ReservationService>
+                        tonic::server::UnaryService<super::ReservationRequest> for reserveSvc<T>
+                    {
+                        type Response = super::ReservationResponse;
                         type Future = BoxFuture<tonic::Response<Self::Response>, tonic::Status>;
                         fn call(
                             &mut self,
-                            request: tonic::Request<super::ReserveRequest>,
+                            request: tonic::Request<super::ReservationRequest>,
                         ) -> Self::Future {
                             let inner = self.0.clone();
                             let fut = async move { (*inner).reserve(request).await };
@@ -760,7 +762,7 @@ pub mod reservation_service_server {
                         tonic::server::ServerStreamingService<super::ListenRequest>
                         for listenSvc<T>
                     {
-                        type Response = super::ListenResponse;
+                        type Response = super::Reservation;
                         type ResponseStream = T::listenStream;
                         type Future =
                             BoxFuture<tonic::Response<Self::ResponseStream>, tonic::Status>;

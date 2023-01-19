@@ -33,11 +33,11 @@ message Reservation{
   string note=7;
 }
 
-message ReserveRequest{
+message ReservationRequest{
   Reservation reservation=1;
 }
 
-message ReserveResponse{
+message ReservationResponse{
   Reservation reservation=1;
 }
 
@@ -143,7 +143,7 @@ message ListenResponse{
 
 
 service ReservationService{
-  rpc reserve(ReserveRequest) returns (ReserveResponse);
+  rpc reserve(ReservationRequest) returns (ReservationResponse);
   rpc confirm(ConfirmRequest) returns (ConfirmResponse);
   rpc update(UpdateRequest) returns (UpdateResponse);
   rpc cancel(CancelRequest) returns (CancelResponse);
@@ -153,5 +153,5 @@ service ReservationService{
   // query reservations,order by reservation id
   rpc filter(FilterRequest) returns (FilterResponse);
   // another system could monitor newly added/confirmed/cancelled reservations
-  rpc listen(ListenRequest) returns (stream ListenResponse);
+  rpc listen(ListenRequest) returns (stream Reservation);
 }
